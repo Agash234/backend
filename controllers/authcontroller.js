@@ -47,10 +47,10 @@ exports.login = async (req, res) => {
 
         const payload = { user: { id: user.id } };
         const token = jwt.sign(payload, privatekey, {
-            expiresIn: '1hr',
+            expiresIn: '2min',
         });
         const refreshToken=jwt.sign(payload,refreshkey,{
-            expiresIn:"2d"
+            expiresIn:"5min"
         });
         const expiresIn = Date.now()+ 10* 60 * 1000;
 

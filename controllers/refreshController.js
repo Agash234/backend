@@ -1,38 +1,26 @@
-
-
-const User = require('../model/user')
+// routes/auth.js
+const privatekey= process.env.PRIVATE_KEY;
 const refreshkey=process.env.REFRESH_KEY;
-const privatekey=process.env.PRIVATE_KEY;
+const jwt = require('jsonwebtoken');
 
+exports.refreshToken=async (req, res) => {
+  const { token } = req.body;
 
- 
-const refreshToken = async (req, res) => {
-  const { refreshToken: incomingRefreshToken } = req.body;
-
-  if (!incomingRefreshToken) return res.sendStatus(401); 
-
-  try {
-
-    const decoded = jwt.verify(incomingRefreshToken, refreshkey);
-    const user = await User.findById(decoded.userId); 
-
-    if (!user || user.refreshToken !== incomingRefreshToken) {
-      return res.sendStatus(403); 
-    }
-    const newAccessToken = jwt.sign({ userId: user._id }, privatekey, { expiresIn: '15m' });
-    const newRefreshToken = jwt.sign({ userId: user._id }, refreshkey, { expiresIn: '7d' });
-
-    user.refreshToken = newRefreshToken;
-    await user.save();
-
-    res.json({
-      token: newAccessToken,
-      refreshToken: newRefreshToken
-    });
-  } catch (error) {
-    console.error('Error refreshing token:', error);
-    res.sendStatus(403); 
+  if (!token) {
+      return res.status(401).send('Refresh token required');
   }
-};
 
-module.exports = { refreshToken };
+  // Verify the refresh token
+  jwt.verify(token, refreshkey, (err, user) => {
+      if (err) {
+          return res.status(403).send('Invalid refresh token');
+      }
+
+      // Generate a new access token
+      const accessToken = jwt.sign({ username: user.username }, privatekey, {
+          expiresIn: '5m', // New token validity (e.g., 15 minutes)
+      });
+
+      res.json({ token: accessToken });
+  });
+};
